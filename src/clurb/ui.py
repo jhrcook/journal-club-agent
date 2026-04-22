@@ -72,15 +72,12 @@ def show_prompt(prompt_text: str, title: str = "Prompt", border_style: str = "bl
     """
     # Create a formatted display of the prompt
     formatted_text = Text(prompt_text)
-    formatted_text.highlight_regex(r"<[^>]+>", style="bold blue")  # Highlight XML tags
-    formatted_text.highlight_regex(
-        r"##[^#\n]+",
-        style="bold magenta",
-    )  # Highlight headers
-    formatted_text.highlight_regex(
-        r"###[^#\n]+",
-        style="bold cyan",
-    )  # Highlight sub-headers
+    # Highlight XML tags
+    formatted_text.highlight_regex(r"<[^>]+>", style="bold blue")
+    # Highlight headers
+    formatted_text.highlight_regex(r"##[^#\n]+", style="bold magenta")
+    # Highlight sub-headers
+    formatted_text.highlight_regex(r"###[^#\n]+", style="bold cyan")
 
     # Display in a panel for better presentation
     console.print(

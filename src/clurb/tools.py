@@ -8,7 +8,7 @@ import httpx
 from langchain_core.tools import InjectedToolArg, tool
 from markdownify import markdownify
 from tavily import TavilyClient
-from typing_extensions import Annotated, Literal
+from typing_extensions import Annotated
 
 tavily_client = TavilyClient()
 
@@ -38,23 +38,15 @@ def fetch_webpage_content(url: str, timeout: float = 10.0) -> str:
 
 
 @tool(parse_docstring=True)
-def tavily_search(
-    query: str,
-    max_results: Annotated[int, InjectedToolArg] = 1,
-    topic: Annotated[
-        Literal["general", "news", "finance"],
-        InjectedToolArg,
-    ] = "general",
-) -> str:
+def tavily_search(query: str, max_results: Annotated[int, InjectedToolArg] = 1) -> str:
     """Search the web for information on a given query.
 
-    Uses Tavily to discover relevant URLs, then fetches and returns full webpage
-    content as markdown.
+    Uses Tavily to discover relevant URLs, then fetches and returns full webpage content
+    as markdown.
 
     Args:
         query: Search query to execute
         max_results: Maximum number of results to return (default: 1)
-        topic: Topic filter - 'general', 'news', or 'finance' (default: 'general')
 
     Returns:
         Formatted search results with full webpage content
@@ -62,9 +54,7 @@ def tavily_search(
     """
     # Use Tavily to discover URLs
     search_results = tavily_client.search(
-        query,
-        max_results=max_results,
-        topic=topic,
+        query, max_results=max_results, topic="general"
     )
 
     # Fetch full content for each URL
@@ -98,8 +88,8 @@ def think_tool(reflection: str) -> str:
     """Tool for strategic reflection on research progress and decision-making.
 
     Use this tool after each search to analyze results and plan next steps
-    systematically. This creates a deliberate pause in the research workflow for
-    quality decision-making.
+    systematically. This creates a deliberate pause in the research workflow for quality
+    decision-making.
 
     When to use:
     - After receiving search results: What key information did I find?
