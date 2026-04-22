@@ -25,7 +25,8 @@ def fetch_webpage_content(url: str, timeout: float = 10.0) -> str:
 
     """
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 "
+        "(KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
     }
 
     try:
@@ -47,7 +48,8 @@ def tavily_search(
 ) -> str:
     """Search the web for information on a given query.
 
-    Uses Tavily to discover relevant URLs, then fetches and returns full webpage content as markdown.
+    Uses Tavily to discover relevant URLs, then fetches and returns full webpage
+    content as markdown.
 
     Args:
         query: Search query to execute
@@ -95,8 +97,9 @@ def tavily_search(
 def think_tool(reflection: str) -> str:
     """Tool for strategic reflection on research progress and decision-making.
 
-    Use this tool after each search to analyze results and plan next steps systematically.
-    This creates a deliberate pause in the research workflow for quality decision-making.
+    Use this tool after each search to analyze results and plan next steps
+    systematically. This creates a deliberate pause in the research workflow for
+    quality decision-making.
 
     When to use:
     - After receiving search results: What key information did I find?
@@ -111,7 +114,8 @@ def think_tool(reflection: str) -> str:
     4. Strategic decision - Should I continue searching or provide my answer?
 
     Args:
-        reflection: Your detailed reflection on research progress, findings, gaps, and next steps
+        reflection: Your detailed reflection on research progress, findings, gaps, and
+        next steps
 
     Returns:
         Confirmation that reflection was recorded for decision-making

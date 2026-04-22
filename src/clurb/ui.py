@@ -30,7 +30,8 @@ def format_message_content(message):
     else:
         parts.append(str(message.content))
 
-    # Handle tool calls attached to the message (OpenAI format) - only if not already processed
+    # Handle tool calls attached to the message (OpenAI format) -
+    # only if not already processed
     if (
         not tool_calls_processed
         and hasattr(message, "tool_calls")

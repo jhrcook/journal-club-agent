@@ -9,6 +9,7 @@ dependencies = [
     "deepagents>=0.5.3",
     "docling[easyocr]>=2.90.0",
     "jupyterlab>=4.5.6",
+    "markdownify>=1.2.2",
     "pydantic>=2.13.3",
     "rich",
     "tavily-python>=0.7.23",
@@ -24,6 +25,7 @@ build-backend = "uv_build"
 
 [dependency-groups]
 dev = [
+    "pre-commit>=4.6.0",
     "ruff>=0.15.11",
     "ty>=0.0.32",
     "types-pyyaml>=6.0.12.20260408",
@@ -51,12 +53,15 @@ select = [
     "F",
     "RUF",
 ]
-ignore = []
+ignore = ["D203", "D213", "COM812"]
 
 # Allow fix for all enabled rules (when `--fix`) is provided.
 fixable = ["ALL"]
 unfixable = []
 
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["E402"]
+"src/clurb/prompts.py" = ["E501"]
 
 [tool.ruff.format]
 # Like Black, use double quotes for strings.

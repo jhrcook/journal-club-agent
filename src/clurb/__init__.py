@@ -17,6 +17,7 @@ __all__: Final[list[str]] = [
     "SUBAGENT_DELEGATION_INSTRUCTIONS",
     "format_message_content",
     "format_messages",
+    "secrets",
     "show_prompt",
     "tavily_search",
     "think_tool",

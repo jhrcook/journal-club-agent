@@ -15,6 +15,7 @@ from clurb.tools import tavily_search, think_tool
 
 
 def build_research_agent() -> Any:
+    """Build a research AI agent."""
     # Limits
     max_concurrent_research_units = 3
     max_researcher_iterations = 3
@@ -23,7 +24,7 @@ def build_research_agent() -> Any:
     current_date = datetime.now().strftime("%Y-%m-%d")
 
     # Combine orchestrator instructions (RESEARCHER_INSTRUCTIONS only for sub-agents)
-    INSTRUCTIONS = (
+    instructions = (
         RESEARCH_WORKFLOW_INSTRUCTIONS
         + "\n\n"
         + "=" * 80
@@ -37,7 +38,8 @@ def build_research_agent() -> Any:
     # Create research sub-agent
     research_sub_agent = {
         "name": "research-agent",
-        "description": "Delegate research to the sub-agent researcher. Only give this researcher one topic at a time.",
+        "description": "Delegate research to the sub-agent researcher. Only give "
+        "this researcher one topic at a time.",
         "system_prompt": RESEARCHER_INSTRUCTIONS.format(date=current_date),
         "tools": [tavily_search, think_tool],
     }
@@ -55,6 +57,6 @@ def build_research_agent() -> Any:
     return create_deep_agent(
         model=model,
         tools=[tavily_search, think_tool],
-        system_prompt=INSTRUCTIONS,
-        subagents=[research_sub_agent],
+        system_prompt=instructions,
+        subagents=[research_sub_agent],  # type: ignore
     )
