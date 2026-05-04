@@ -13,7 +13,7 @@ from clurb.prompts import (
     RESEARCHER_INSTRUCTIONS,
     SUBAGENT_DELEGATION_INSTRUCTIONS,
 )
-from clurb.tools import tavily_search, think_tool
+from clurb.tools import think_tool
 
 
 def list_ollama_models() -> list[str]:
@@ -67,6 +67,11 @@ def build_research_agent(model: str, provider: Literal["ollama"] = "ollama") -> 
             max_researcher_iterations=max_researcher_iterations,
         )
     )
+
+    tavily_wrapper = TavilyWrapper(load_secrets(secrets_yaml).api_keys.tavily)
+    tavily_search = tavily_wrapper.build_tavily_search_func()
+
+    custom_middleware = [log_model_calls, log_tool_calls]
 
     # Create research sub-agent
     research_sub_agent = SubAgent(

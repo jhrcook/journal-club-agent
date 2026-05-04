@@ -5,12 +5,11 @@ using Tavily for URL discovery and fetching full webpage content.
 """
 
 import httpx
+from langchain.tools import BaseTool
 from langchain_core.tools import InjectedToolArg, tool
 from markdownify import markdownify
 from tavily import TavilyClient
 from typing_extensions import Annotated
-
-tavily_client = TavilyClient()
 
 
 def fetch_webpage_content(url: str, timeout: float = 10.0) -> str:
@@ -37,50 +36,63 @@ def fetch_webpage_content(url: str, timeout: float = 10.0) -> str:
         return f"Error fetching content from {url}: {e!s}"
 
 
-@tool(parse_docstring=True)
-def tavily_search(query: str, max_results: Annotated[int, InjectedToolArg] = 1) -> str:
-    """Search the web for information on a given query.
+class TavilyWrapper:
+    """Web search tool."""
 
-    Uses Tavily to discover relevant URLs, then fetches and returns full webpage content
-    as markdown.
+    def __init__(self, api_key: str) -> None:
+        """Instantiate a TavilyWrapper."""
+        self.tavily_client = TavilyClient(api_key=api_key)
 
-    Args:
-        query: Search query to execute
-        max_results: Maximum number of results to return (default: 1)
+    def build_tavily_search_func(self) -> BaseTool:
+        """Build a Tavily search tool function.
 
-    Returns:
-        Formatted search results with full webpage content
+        The return function should be passed to an agent as a tool.
+        """
 
-    """
-    # Use Tavily to discover URLs
-    search_results = tavily_client.search(
-        query, max_results=max_results, topic="general"
-    )
+        @tool(parse_docstring=True)
+        def tavily_search(
+            query: str, max_results: Annotated[int, InjectedToolArg] = 1
+        ) -> str:
+            """Search the web for information on a given query.
 
-    # Fetch full content for each URL
-    result_texts = []
-    for result in search_results.get("results", []):
-        url = result["url"]
-        title = result["title"]
+            Uses Tavily to discover relevant URLs, then fetches and returns full webpage
+            content as markdown.
 
-        # Fetch webpage content
-        content = fetch_webpage_content(url)
+            Args:
+                query: Search query to execute
+                max_results: Maximum number of results to return (default: 1)
 
-        result_text = f"""## {title}
-**URL:** {url}
+            Returns:
+                Formatted search results with full webpage content
 
-{content}
+            """
+            # Use Tavily to discover URLs
+            search_results = self.tavily_client.search(
+                query, max_results=max_results, topic="general"
+            )
 
----
-"""
-        result_texts.append(result_text)
+            # Fetch full content for each URL
+            result_texts = []
+            for result in search_results.get("results", []):
+                url = result["url"]
+                title = result["title"]
 
-    # Format final response
-    response = f"""🔍 Found {len(result_texts)} result(s) for '{query}':
+                # Fetch webpage content
+                content = fetch_webpage_content(url)
 
-{chr(10).join(result_texts)}"""
+                # Format text for agent.
+                result_text = f"## {title}\n**URL:** {url}\n\n{content}\n\n---"
+                result_texts.append(result_text)
 
-    return response
+            # Format final response
+            response = (
+                f"🔍 Found {len(result_texts)} result(s) for '{query}':"
+                f"\n\n{chr(10).join(result_texts)}"
+            )
+
+            return response
+
+        return tavily_search
 
 
 @tool(parse_docstring=True)
