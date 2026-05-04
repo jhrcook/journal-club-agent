@@ -1,15 +1,20 @@
 """Utility functions for displaying messages and prompts in Jupyter notebooks."""
 
 import json
+from typing import Iterable
 
+from langchain.messages import AIMessage, HumanMessage, ToolMessage
 from rich.console import Console
+from rich.markdown import Markdown
 from rich.panel import Panel
 from rich.text import Text
 
 console = Console()
 
+_DeepAgentMessage = AIMessage | HumanMessage | ToolMessage
 
-def format_message_content(message):
+
+def format_message_content(message: _DeepAgentMessage) -> Markdown:
     """Convert message content to displayable string."""
     parts = []
     tool_calls_processed = False
@@ -42,23 +47,22 @@ def format_message_content(message):
             parts.append(f"   Args: {json.dumps(tool_call['args'], indent=2)}")
             parts.append(f"   ID: {tool_call['id']}")
 
-    return "\n".join(parts)
+    formatted_content = "\n".join(parts)
+    return Markdown(formatted_content)
 
 
-def format_messages(messages):
+def format_messages(messages: Iterable[_DeepAgentMessage]):
     """Format and display a list of messages with Rich formatting."""
     for m in messages:
-        msg_type = m.__class__.__name__.replace("Message", "")
         content = format_message_content(m)
-
-        if msg_type == "Human":
-            console.print(Panel(content, title="🧑 Human", border_style="blue"))
-        elif msg_type == "Ai":
-            console.print(Panel(content, title="🤖 Assistant", border_style="green"))
-        elif msg_type == "Tool":
-            console.print(Panel(content, title="🔧 Tool Output", border_style="yellow"))
+        if isinstance(m, HumanMessage):
+            console.print(Panel(content, title="Human", border_style="blue"))
+        elif isinstance(m, AIMessage):
+            console.print(Panel(content, title="Assistant", border_style="green"))
+        elif isinstance(m, ToolMessage):
+            console.print(Panel(content, title="Tool Output", border_style="yellow"))
         else:
-            console.print(Panel(content, title=f"📝 {msg_type}", border_style="white"))
+            console.print(Panel(content, title=f"📝 {type(m)}", border_style="white"))
 
 
 def show_prompt(prompt_text: str, title: str = "Prompt", border_style: str = "blue"):
