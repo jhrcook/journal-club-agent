@@ -1,19 +1,24 @@
 """Research agent."""
 
 from datetime import datetime
-from typing import Any, Literal
+from pathlib import Path
+from typing import Literal
 
 import ollama
 from deepagents import SubAgent, create_deep_agent
+from deepagents.backends import FilesystemBackend
 from langchain.chat_models import init_chat_model
+from langgraph.graph.state import CompiledStateGraph
 from loguru import logger
 
+from clurb.middleware import log_model_calls, log_tool_calls
 from clurb.prompts import (
     RESEARCH_WORKFLOW_INSTRUCTIONS,
     RESEARCHER_INSTRUCTIONS,
     SUBAGENT_DELEGATION_INSTRUCTIONS,
 )
-from clurb.tools import think_tool
+from clurb.secrets import load_secrets
+from clurb.tools import TavilyWrapper, think_tool
 
 
 def list_ollama_models() -> list[str]:
@@ -47,11 +52,20 @@ def check_ollama_model(model: str) -> bool:
     return False
 
 
-def build_research_agent(model: str, provider: Literal["ollama"] = "ollama") -> Any:
+def build_research_agent(
+    model: str,
+    provider: Literal["ollama"] = "ollama",
+    *,
+    workspace: Path = Path("./agent-workspace"),
+    secrets_yaml: Path = Path("./secrets.yaml"),
+) -> CompiledStateGraph:
     """Build a research AI agent."""
     # Limits
     max_concurrent_research_units = 1
     max_researcher_iterations = 1
+
+    workspace.mkdir(exist_ok=True, parents=True)
+    backend = FilesystemBackend(root_dir=workspace, virtual_mode=True)
 
     # Get current date
     current_date = datetime.now().strftime("%Y-%m-%d")
@@ -82,10 +96,12 @@ def build_research_agent(model: str, provider: Literal["ollama"] = "ollama") -> 
         ),
         system_prompt=RESEARCHER_INSTRUCTIONS.format(date=current_date),
         tools=[tavily_search, think_tool],
+        middleware=custom_middleware,
+        model=init_chat_model(model="qwen3.6:latest", model_provider=provider),
     )
 
     # Create the base chat model.
-    chat_model = init_chat_model(model=f"{provider}:{model}")
+    chat_model = init_chat_model(model=model, model_provider=provider)
 
     # Create the agent
     return create_deep_agent(
@@ -93,4 +109,6 @@ def build_research_agent(model: str, provider: Literal["ollama"] = "ollama") -> 
         tools=[tavily_search, think_tool],
         system_prompt=instructions,
         subagents=[research_sub_agent],
+        middleware=custom_middleware,
+        backend=backend,
     )
