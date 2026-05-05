@@ -1,9 +1,11 @@
 """Command line interface."""
 
+import time
 from pathlib import Path
 from typing import Annotated
 
 import rich
+from langchain.messages import HumanMessage
 from loguru import logger
 from rich.markdown import Markdown
 from typer import Option, Typer
@@ -33,14 +35,17 @@ def prepare(
     logger.info(f"Instantiating agent with primary model '{model}'.")
     agent = agents.build_research_agent(model=model, workspace=output_dir)
 
+    tic = time.perf_counter()
     try:
         logger.info("Running agent with user prompt.")
-        result = agent.invoke(input={"messages": [{"role": "user", "content": prompt}]})
+        human_message = HumanMessage(prompt)
+        result = agent.invoke(human_message)
         logger.info("Agent finished.")
     except BaseException as err:
         logger.error(f"Agent errored: {err}")
         raise err
 
+    toc = time.perf_counter()
+    runtime = (toc - tic) / 60
     rich.print(Markdown(result["messages"][-1].content))
-
-    logger.success("Done!")
+    logger.success(f"Done (total agent runtime: {runtime:0.2f} min.)!")
