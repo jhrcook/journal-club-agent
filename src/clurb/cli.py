@@ -1,6 +1,7 @@
 """Command line interface."""
 
 import time
+from datetime import datetime
 from pathlib import Path
 from typing import Annotated
 
@@ -11,11 +12,18 @@ from rich.markdown import Markdown
 from typer import Option, Typer
 
 from clurb import agents
+from clurb.utilities import write_chat_to_file
 
-app = Typer()
+epilog = "From JHC with ❤️"
+app = Typer(add_completion=False, epilog=epilog)
 
 
-@app.command()
+def _message_thread_output_markdown_file(output_dir: Path) -> Path:
+    timestamp = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
+    return output_dir / f"agent-thread_{timestamp}.md"
+
+
+@app.command(epilog=epilog)
 def prepare(
     output_dir: Annotated[
         Path,
@@ -39,7 +47,7 @@ def prepare(
     try:
         logger.info("Running agent with user prompt.")
         human_message = HumanMessage(prompt)
-        result = agent.invoke(human_message)
+        result = agent.invoke({"messages": [human_message]})
         logger.info("Agent finished.")
     except BaseException as err:
         logger.error(f"Agent errored: {err}")
@@ -47,5 +55,13 @@ def prepare(
 
     toc = time.perf_counter()
     runtime = (toc - tic) / 60
+    logger.debug(f"Total agent runtime: {runtime:0.2f} min.")
+
     rich.print(Markdown(result["messages"][-1].content))
-    logger.success(f"Done (total agent runtime: {runtime:0.2f} min.)!")
+    logger.debug(f"Final message:\n{result['messages'][-1].content}")
+
+    thread_md = _message_thread_output_markdown_file(output_dir)
+    logger.debug("Writing full AI message thread to file: ")
+    write_chat_to_file(result["messages"], thread_md)
+
+    logger.success("Done!")
